@@ -12,12 +12,10 @@ find_package(std_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
-# 메시지 파일 정의
+# Message file definitions
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/WallCollision.msg"
   "msg/PathPoint.msg"
   "msg/PathWithVelocity.msg"
-  "msg/PathPointArray.msg"
   DEPENDENCIES builtin_interfaces std_msgs nav_msgs
 )
 

@@ -1,89 +1,53 @@
-# F1TENTH Planning Custom Messages
+# Planning Custom Messages
 
-Custom ROS2 message definitions for F1TENTH autonomous racing system. Provides specialized data structures for path planning and control.
+Custom ROS2 message definitions for F1TENTH autonomous racing path planning and control.
 
 ## Message Types
 
-### PathPoint.msg
+### PathPoint
+Single waypoint with velocity and curvature information.
 ```
-# Single waypoint with velocity information
-geometry_msgs/Point position     # x, y, z coordinates
-float64 velocity                 # target speed at this point
-float64 curvature               # path curvature (optional)
-```
-
-### PathPointArray.msg
-```
-# Array of path points for trajectory representation
-std_msgs/Header header          # timestamp and frame info
-PathPoint[] points              # sequence of waypoints
+float64 x              # x coordinate (m)
+float64 y              # y coordinate (m) 
+float64 yaw            # heading angle (rad)
+float64 velocity       # target velocity (m/s)
+float64 curvature      # path curvature (1/m)
+float64 time_from_start # time from path start (s)
 ```
 
-### PathWithVelocity.msg
+### PathWithVelocity
+Complete trajectory with velocity profile for path following.
 ```
-# Complete path with velocity profile for racing
-std_msgs/Header header          # timestamp and frame info  
-PathPoint[] path_points         # waypoints with target speeds
-float64 total_length           # total path length
-int32 closest_point_index      # index of closest point to robot
-```
-
-### WallCollision.msg
-```
-# Wall collision detection information
-std_msgs/Header header          # timestamp and frame info
-bool collision_detected         # true if collision imminent
-geometry_msgs/Point collision_point  # predicted collision location
-float64 time_to_collision      # estimated time until impact
-float64 collision_distance     # distance to collision point
+std_msgs/Header header  # timestamp and frame
+PathPoint[] points      # trajectory waypoints
+float64 max_velocity    # maximum allowed velocity (m/s)
+uint32 path_id          # unique path identifier
 ```
 
-## Usage in System
+## System Integration
 
-### Lattice Planner
-**Publishes:**
-- `PathWithVelocity` on `/planned_path` - Generated trajectories with speed profiles
+```
+Local Planner → PathWithVelocity → Path Follower → Vehicle Control
+```
 
-### Path Follower  
-**Subscribes:**
-- `PathWithVelocity` from `/planned_path` - Executes planned trajectories
+**Publishers:**
+- `local_planner_pkg` → `/planned_path` (PathWithVelocity)
 
-### Safety Monitor
-**Publishes:**
-- `WallCollision` on `/wall_collision` - Collision warnings
+**Subscribers:** 
+- `lattice_path_follower_f1tenth` ← `/planned_path` (PathWithVelocity)
+- `data_collection_pkg_for_ml_local_planning` ← `/planned_path_with_velocity` (PathWithVelocity)
 
-## Building
+## Build
 
 ```bash
-# Build messages (from workspace root)
-colcon build --packages-select f1tenth_planning_custom_msgs
+colcon build --packages-select planning_custom_msgs
 source install/setup.bash
 ```
 
-**Note**: This package must be built before other packages that depend on these messages.
+Build this package before any dependent packages.
 
-## Integration
+## Dependencies
 
-These messages enable high-level coordination between planning and control components:
-
-```
-Planner → PathWithVelocity → Path Follower → AckermannDrive → Hardware
-    ↓
-Safety Monitor → WallCollision → Emergency Brake
-```
-
-## Message Design
-
-**PathWithVelocity** is the core message type that:
-- Carries complete trajectory information
-- Includes velocity profiles for each waypoint  
-- Provides spatial and temporal path data
-- Enables smooth path following and speed control
-
-**WallCollision** provides safety-critical information for:
-- Real-time collision avoidance
-- Emergency braking decisions
-- Path replanning triggers
-- Safety monitor alerts
-
-Built for high-frequency, low-latency communication in F1TENTH racing applications.
+- `std_msgs`
+- `builtin_interfaces`
+- `nav_msgs`
